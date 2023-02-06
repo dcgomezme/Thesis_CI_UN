@@ -1,0 +1,15 @@
+ESTRUCTURA DEL DOCUMENTO
+
+1. Introducción.
+
+2. Marco Teórico.
+
+3. Metodología.
+
+4. Resultados y Análisis.
+
+5. Conclusiones.
+
+6. Recomendaciones.
+
+7. Bibliografía.
