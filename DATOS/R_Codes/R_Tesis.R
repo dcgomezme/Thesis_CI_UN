@@ -11,12 +11,20 @@ library(data.table) #Fast aggregation of large data
 library(tidytable) #A tidy interface to 'data.table'
 library(lubridate) #Make dealing with dates a little easier
 library(tidyverse) #Set of packages that work in harmony
+library(sf)
+library(raster)
+library(spdplyr)
+library(sp)
+library(maptools)
+library(dplyr)
+library(terra)
+library(rgdal)
 
 #Defining the working directory
 
 setwd("C:/Users/David Gomez/Desktop/TESIS/DATOS")
 
-#Function to be able to discard stations without data
+#Function to be able to discard stations without data - precipitation
 
 agg <- function(x) {
   if (sum(is.na(x)) >= 0.25 * length(x)) { #defined percentage
@@ -40,7 +48,54 @@ data_ppt <- as.xts(data_ppt[ , -1],
 #Obtaining the annual precipitation of each station
 
 data_y_ppt <- aggregate(data_ppt, by = year(index(data_ppt)), agg) %>% 
-  data.frame()
+  data.frame(check.names = FALSE)
+
+#Function to be able to discard stations without data - temperature
+
+agg_mt <- function(x) {
+  if (sum(is.na(x)) >= 0.25 * length(x)) { #defined percentage
+    return(NA)
+  }
+  else {
+    return(mean(x, na.rm = TRUE))
+  }
+}
+
+#Reading temperature information
+
+data_mt <- read.xlsx("DatosIDW_221205.xlsx", "TSSM_D")
+
+#Sorting the temperature data by dates 
+
+data_mt <- as.xts(data_mt[ , -1],
+                  order.by = as.Date(data_mt[ , 1],
+                                     format = "%Y-%m-%d"))
+
+#Obtaining the annual temperature of each station
+
+data_y_mt <- aggregate(data_mt, by = year(index(data_mt)), agg_mt) %>% 
+  data.frame(check.names = FALSE)
+
+v_cln_ppt <- colnames(data_ppt)
+
+v_cln_mt <- colnames(data_mt)
+
+wd_gst <- readOGR("C:/Users/David Gomez/Desktop/TESIS/DATOS/Shapes/CNE_IDEAM.shp")
+
+
+#gst_ext <- spTransform(wd_gst, "EPSG:9377")
+
+#gst_ext <- st_as_sf(gst_ext)
+
+#gst_ext <- gst_ext %>% filter(CODIGO %in% v_cln_ppt)
+
+#gst_ext <- as(gst_ext, "Spatial")
+
+sta_ppt <- spTransform(wd_gst, "EPSG:9377") %>% st_as_sf() %>% 
+  filter(CODIGO %in% v_cln_ppt) %>% as("Spatial")
+
+sta_mt <- spTransform(wd_gst, "EPSG:9377") %>% st_as_sf() %>% 
+  filter(CODIGO %in% v_cln_mt) %>% as("Spatial")
 
 #---------------------------------
 
